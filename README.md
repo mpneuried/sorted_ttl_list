@@ -1,4 +1,4 @@
-# ListExpireEts
+# Sorted TTL List
 
 [![Travis Build Status](https://img.shields.io/travis/mpneuried/sorted_ttl_list.svg)](https://travis-ci.org/mpneuried/sorted_ttl_list)
 [![Windows Tests](https://img.shields.io/appveyor/ci/mpneuried/sorted_ttl_list.svg?label=WindowsTest)](https://ci.appveyor.com/project/mpneuried/sorted_ttl_list)
