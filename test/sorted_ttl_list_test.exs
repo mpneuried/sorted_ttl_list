@@ -43,27 +43,37 @@ defmodule SortedTtlListTest do
 		Stl.push( "testEx", "aaa", 1, 5, %{ a: 123 } )
 		Stl.push( "testEx", "bbb", 10, 10, %{ b: 234 } )
 		Stl.push( "testEx", "ccc", 5, 1, %{ c: 345 } )
+		Stl.push( "testEx", "ddd", 23, 10, %{ d: 456 } )
 		
-		[ { "aaa", 1, _, %{ a: 123 } }, { "ccc", 5, _, %{ c: 345 } }, { "bbb", 10, _, %{ b: 234 } } ] = Stl.list( "testEx" )
+		[ { "aaa", 1, _, %{ a: 123 } }, { "ccc", 5, _, %{ c: 345 } }, { "bbb", 10, _, %{ b: 234 } }, { "ddd", 23, _, %{ d: 456 } } ] = Stl.list( "testEx" )
 		
 		IO.puts "\nA: wait for 3 sec. until key 'ccc' expires"
 		:timer.sleep( 3000 )
 		
-		[ { "aaa", 1, _, %{ a: 123 } }, { "bbb", 10, _, %{ b: 234 } } ] = Stl.list( "testEx" )
+		[ { "aaa", 1, _, %{ a: 123 } }, { "bbb", 10, _, %{ b: 234 } }, { "ddd", 23, _, %{ d: 456 } } ] = Stl.list( "testEx" )
 		
 		IO.puts "\nB: wait for 4 sec. until key 'aaa' expires"
 		:timer.sleep( 4000 )
 		
-		[ { "bbb", 10, _, %{ b: 234 } } ] = Stl.list( "testEx" )
+		[ { "bbb", 10, _, %{ b: 234 } }, { "ddd", 23, _, %{ d: 456 } } ] = Stl.list( "testEx" )
 		{ "bbb", 10, _, %{ b: 234 } } = Stl.get( "testEx", "bbb" )
 		assert Stl.get( "testEx", "aaa" ) == nil
 		
+		# reset the ttl of the `ddd` element
+		Stl.push( "testEx", "ddd", 13, 5, %{ d: 456 } )
 		{ "bbb", 10, _, %{ b: 234 } } = Stl.get( "testEx", "bbb" )
 		
 		IO.puts "\nC: wait for 4 sec. until key 'bbb' expires"
 		:timer.sleep( 4000 )
 		
 		assert Stl.get( "testEx", "bbb" ) == nil
+		assert Stl.size( "testEx" ) == 1
+		
+		[ { "ddd", 13, _, %{ d: 456 } } ] = Stl.list( "testEx" )
+		
+		:timer.sleep( 2000 )
+		
+		assert Stl.get( "testEx", "ddd" ) == nil
 		assert Stl.size( "testEx" ) == 0
 		
 		[ ] = Stl.list( "testEx" )

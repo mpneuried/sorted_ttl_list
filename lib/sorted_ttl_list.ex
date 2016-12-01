@@ -1,8 +1,38 @@
 defmodule SortedTtlList do
 	@moduledoc """
-	
+	Generate a sorted lists with a ttl for every element in the list.
 	"""
 	use GenServer
+	
+	@typedoc """
+	The tablename
+	"""
+	@type table :: String.t
+	@typedoc """
+	The element key
+	"""
+	@type key :: String.t
+	@typedoc """
+	The score to do the sorting
+	"""
+	@type score :: Integer.t
+	@typedoc """
+	The time to live used by the `.push/5` method.
+	"""
+	@type ttl :: Integer.t
+	@typedoc """
+	The response element will not show the ttl. It will transform it to a timestamp until it is alive.
+	"""
+	@type expire :: Integer.t
+	@typedoc """
+	Any aditional data to store with this key
+	"""
+	@type data :: any
+	
+	@typedoc """
+	A response element
+	"""
+	@type element :: { key, score, expire, data }
 	
 	require Logger
 	
@@ -23,6 +53,7 @@ defmodule SortedTtlList do
 		...>SortedTtlList.size( tid )
 		1
 	"""
+	@spec push( table, key, score, ttl, data ) :: :ok
 	def push( table, key, score, ttl, data \\ nil ) do
 		GenServer.cast( table |> tbl, { :push, { key, score, ttl, data } } )
 	end
@@ -51,6 +82,7 @@ defmodule SortedTtlList do
 		...>SortedTtlList.size( "test_table" )
 		0
 	"""
+	@spec get( table, key ) :: element | nil
 	def get( table, key ) do
 		GenServer.call( table |> tbl , { :get, key } ) 
 	end
@@ -70,6 +102,7 @@ defmodule SortedTtlList do
 		...>SortedTtlList.size( "test_table" )
 		0
 	"""
+	@spec delete( table, key ) :: :ok
 	def delete( table, key ) do
 		GenServer.cast( table |> tbl, { :delete, key } )
 	end
@@ -89,6 +122,7 @@ defmodule SortedTtlList do
 		...>SortedTtlList.size( tid )
 		2
 	"""
+	@spec list( table ) :: [ element ]
 	def list( table ) do
 		GenServer.call( table |> tbl , :list ) 
 	end
@@ -107,12 +141,38 @@ defmodule SortedTtlList do
 		...>SortedTtlList.size( tid )
 		1
 	"""
+	@spec size( table ) :: Integer.t
 	def size( table ) do
-		GenServer.call( table |> tbl , :size ) 
+		GenServer.call( table |> tbl , :size )
+	end
+	
+	@doc """
+	Check if a table exists
+
+	## Parameters
+
+	* `table` (Binary|Atom) The table to check.
+
+	## Examples
+		iex>{:ok, _tid} = SortedTtlList.start_link( "hello" )
+		...>SortedTtlList.exists( "hello" )
+		true
+		
+		iex>SortedTtlList.exists( "nobody_here" )
+		false
+	"""
+	@spec exists( table ) :: Boolean.t
+	def exists( table ) do
+		tname = table |> tbl 
+		if Process.whereis( tname ) != nil do
+			GenServer.call( tname , :exists )
+		else
+			false
+		end
 	end
 	
 	# GENSERVER API
-		
+	@spec start_link( table ) :: { :ok, pid }
 	def start_link( tablename ) do
 		table = tablename |> tbl
 		GenServer.start_link( __MODULE__, [ table ] , name: table )
@@ -183,7 +243,14 @@ defmodule SortedTtlList do
 	
 	def handle_call( :size, _from, tid ) do
 		{ :reply, :ets.info( tid, :size ), tid }
-		
+	end
+	
+	def handle_call( :exists, _from, tid ) do
+		if :ets.info( tid ) != :undefined do
+			{ :reply, true, tid }
+		else
+			{ :reply, false, tid }
+		end
 	end
 	
 	defp get_key( key, tid ) do
@@ -221,9 +288,7 @@ defmodule SortedTtlList do
 		end
 	end
 	
-	defp check_el( { _k, _s, ttl, _d } ), do: check_el( ttl, now( ) )
 	defp check_el( ttl ), do: check_el( ttl, now( ) )
-	defp check_el( { _k, _s, ttl, _d }, date ), do: check_el( ttl, date )
 	defp check_el( ttl, date ) do
 		if date < ttl do
 			true

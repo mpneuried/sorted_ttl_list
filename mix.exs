@@ -19,7 +19,7 @@ defmodule SortedTtlList.Mixfile do
 	def project do
 		[
 			app: :sorted_ttl_list,
-			version: "0.0.2",
+			version: "0.1.0",
 			elixir: "~> 1.3",
 			build_embedded: Mix.env == :prod,
 			start_permanent: Mix.env == :prod,
