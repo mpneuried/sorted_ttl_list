@@ -213,7 +213,6 @@ defmodule SortedTtlList do
 	
 	@lint { Credo.Check.Refactor.PipeChainStart, false }
 	def handle_call( { :list, reverse }, _from, tid ) do
-		IO.inspect "list dir: #{reverse}"
 		date = now( )
 		{ found, expired } = :ets.tab2list( tid )
 			|> Enum.reduce( { [ ], [ ] }, fn ( { key, score, ttl, data }, { fnd, exp } ) ->

@@ -99,6 +99,7 @@ false = SortedTtlList.exists( "nobody" )
 
 |Version|Date|Description|
 |:--:|:--:|:--|
+|0.1.2|2016-12-01|removed io inspect|
 |0.1.1|2016-12-01|added reverse option for list|
 |0.1.0|2016-12-01|added `exists` method and optimized docs|
 |0.0.1|2016-11-28|Minimal elixir version|
