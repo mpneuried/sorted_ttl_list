@@ -113,6 +113,7 @@ defmodule SortedTtlList do
 	## Parameters
 
 	* `table` (Binary|Atom) The table to list the elements.
+	* `reverse` (Boolean) Sort in reverse order vom high to low.
 
 	## Examples
 		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
@@ -121,10 +122,17 @@ defmodule SortedTtlList do
 		...>[ { "mykeyB", 13, _tsA, nil }, { "mykeyA", 23, _tsB, nil } ] = SortedTtlList.list( tid )
 		...>SortedTtlList.size( tid )
 		2
+		
+		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
+		...>:ok = SortedTtlList.push( tid, "mykeyA", 23, 3600, nil )
+		...>:ok = SortedTtlList.push( tid, "mykeyB", 13, 3600, nil )
+		...>[ { "mykeyA", 23, _tsB, nil }, { "mykeyB", 13, _tsA, nil } ] = SortedTtlList.list( tid, true )
+		...>SortedTtlList.size( tid )
+		2
 	"""
 	@spec list( table ) :: [ element ]
-	def list( table ) do
-		GenServer.call( table |> tbl , :list ) 
+	def list( table, reverse \\ false ) do
+		GenServer.call( table |> tbl , { :list, reverse } ) 
 	end
 	
 	@doc """
@@ -204,8 +212,8 @@ defmodule SortedTtlList do
 	
 	
 	@lint { Credo.Check.Refactor.PipeChainStart, false }
-	def handle_call( :list, _from, tid ) do
-		
+	def handle_call( { :list, reverse }, _from, tid ) do
+		IO.inspect "list dir: #{reverse}"
 		date = now( )
 		{ found, expired } = :ets.tab2list( tid )
 			|> Enum.reduce( { [ ], [ ] }, fn ( { key, score, ttl, data }, { fnd, exp } ) ->
@@ -220,7 +228,7 @@ defmodule SortedTtlList do
 		expired |> delete_key( tid )
 		
 		list = found
-			|> Enum.sort( &( sort_list( &1, &2 ) ) )
+			|> Enum.sort( &( sort_list( &1, &2, reverse ) ) )
 			|> Enum.to_list
 		
 		{ :reply, list, tid }
@@ -273,20 +281,24 @@ defmodule SortedTtlList do
 		:ets.delete( tid, key )
 	end
 	
-	defp sort_list( { key_a, score_a, _, _ }, { key_b, score_b, _, _ } ) do
+	defp sort_list( { key_a, score_a, _, _ }, { key_b, score_b, _, _ }, reverse ) do
 		cond do
 			score_a == score_b && key_a < key_b ->
-				true
+				sort_dir( true, reverse )
 			score_a == score_b && key_a > key_b ->
-				false
+				sort_dir( false, reverse )
 			score_a < score_b ->
-				true
+				sort_dir( true, reverse )
 			score_a > score_b ->
-				false
+				sort_dir( false, reverse )
 			true ->
-				false
+				sort_dir( false, reverse )
 		end
 	end
+	
+	defp sort_dir( dir, false ), do: dir
+	defp sort_dir( true, true ), do: false
+	defp sort_dir( false, true ), do: true
 	
 	defp check_el( ttl ), do: check_el( ttl, now( ) )
 	defp check_el( ttl, date ) do

@@ -65,6 +65,11 @@ get the sorted list
 [ { "another_key", 1337, 1480622607, %{ another: "data" } }, { "element_key", 1480592547, 1480592607, %{ additional: "data" } } ] = SortedTtlList.list( "my_tablename" )
 ```
 
+or sorted fron high to low
+```elixir
+[ { "another_key", 1337, 1480622607, %{ another: "data" } }, { "element_key", 1480592547, 1480592607, %{ additional: "data" } } ] = SortedTtlList.list( "my_tablename", true )
+```
+
 ### DELETE
 
 delete a element
@@ -94,6 +99,7 @@ false = SortedTtlList.exists( "nobody" )
 
 |Version|Date|Description|
 |:--:|:--:|:--|
+|0.1.1|2016-12-01|added reverse option for list|
 |0.1.0|2016-12-01|added `exists` method and optimized docs|
 |0.0.1|2016-11-28|Minimal elixir version|
 |0.0.1|2016-11-28|first alpha version ...|

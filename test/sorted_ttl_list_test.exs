@@ -46,6 +46,7 @@ defmodule SortedTtlListTest do
 		Stl.push( "testEx", "ddd", 23, 10, %{ d: 456 } )
 		
 		[ { "aaa", 1, _, %{ a: 123 } }, { "ccc", 5, _, %{ c: 345 } }, { "bbb", 10, _, %{ b: 234 } }, { "ddd", 23, _, %{ d: 456 } } ] = Stl.list( "testEx" )
+		[ { "ddd", 23, _, %{ d: 456 } }, { "bbb", 10, _, %{ b: 234 } }, { "ccc", 5, _, %{ c: 345 } }, { "aaa", 1, _, %{ a: 123 } } ] = Stl.list( "testEx", true )
 		
 		IO.puts "\nA: wait for 3 sec. until key 'ccc' expires"
 		:timer.sleep( 3000 )
