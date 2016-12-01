@@ -130,7 +130,7 @@ defmodule SortedTtlList do
 		...>SortedTtlList.size( tid )
 		2
 	"""
-	@spec list( table ) :: [ element ]
+	@spec list( table, Boolean.t ) :: [ element ]
 	def list( table, reverse \\ false ) do
 		GenServer.call( table |> tbl , { :list, reverse } ) 
 	end
