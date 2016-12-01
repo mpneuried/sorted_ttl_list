@@ -1,7 +1,7 @@
 # Sorted TTL List
 
 [![Travis Build Status](https://img.shields.io/travis/mpneuried/sorted_ttl_list.svg)](https://travis-ci.org/mpneuried/sorted_ttl_list)
-[![Windows Tests](https://img.shields.io/appveyor/ci/mpneuried/sorted_ttl_list.svg?label=WindowsTest)](https://ci.appveyor.com/project/mpneuried/sorted_ttl_list)
+[![Windows Tests](https://img.shields.io/appveyor/ci/mpneuried/sorted-ttl-list.svg?label=WindowsTest)](https://ci.appveyor.com/project/mpneuried/sorted-ttl-list)
 [![Coveralls Coverage](https://img.shields.io/coveralls/mpneuried/sorted_ttl_list.svg)](https://coveralls.io/github/mpneuried/sorted_ttl_list)
 
 [![Hex.pm Version](https://img.shields.io/hexpm/v/sorted_ttl_list.svg)](https://hex.pm/packages/sorted_ttl_list)
