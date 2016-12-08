@@ -56,7 +56,10 @@ defmodule SortedTtlListTest do
 		IO.puts "\nB: wait for 4 sec. until key 'aaa' expires"
 		:timer.sleep( 4000 )
 		
-		[ { "bbb", 10, _, %{ b: 234 } }, { "ddd", 23, _, %{ d: 456 } } ] = Stl.list( "testEx" )
+		Stl.push( "testEx", "ddd", 1, 5, %{ d: 4567 } )
+		
+		[ { "ddd", 1, _, %{ d: 4567 } }, { "bbb", 10, _, %{ b: 234 } } ] = Stl.list( "testEx" )
+		[ { "bbb", 10, _, %{ b: 234 } }, { "ddd", 1, _, %{ d: 4567 } } ] = Stl.list( "testEx", true )
 		{ "bbb", 10, _, %{ b: 234 } } = Stl.get( "testEx", "bbb" )
 		assert Stl.get( "testEx", "aaa" ) == nil
 		
