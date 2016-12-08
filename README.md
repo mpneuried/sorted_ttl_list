@@ -19,7 +19,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 
     ```elixir
     def deps do
-      [{:sorted_ttl_list, "~> 0.1.0"}]
+      [{:sorted_ttl_list, "~> 1.0.0"}]
     end
     ```
 
@@ -46,7 +46,7 @@ Create the table
 Add elements to the list or update existing keys
 
 ```elixir
-:ok = SortedTtlList.push( "my_tablename", "element_key", 1480592547, 60, %{ additional: "data" } )
+{ "element_key", 1480592547, 1480592607, %{ additional: "data" } } = SortedTtlList.push( "my_tablename", "element_key", 1480592547, 60, %{ additional: "data" } )
 ```
 
 ### GET
@@ -99,6 +99,7 @@ false = SortedTtlList.exists( "nobody" )
 
 |Version|Date|Description|
 |:--:|:--:|:--|
+|1.0.0|2016-12-08|breaking change: return of `push` is now the generated data `{ key, score, expire_ts, data }` instead of just an `:ok` |
 |0.1.2|2016-12-01|removed io inspect|
 |0.1.1|2016-12-01|added reverse option for list|
 |0.1.0|2016-12-01|added `exists` method and optimized docs|

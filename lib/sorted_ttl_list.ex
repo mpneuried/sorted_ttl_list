@@ -49,13 +49,13 @@ defmodule SortedTtlList do
 
 	## Examples
 		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
-		...>:ok = SortedTtlList.push( tid, "mykey", 23, 3600, %{ some: "additional", data2: "save" } )
+		...>{ "mykey", 23, _expire_ts, %{ some: "additional", data2: "save" } } = SortedTtlList.push( tid, "mykey", 23, 3600, %{ some: "additional", data2: "save" } )
 		...>SortedTtlList.size( tid )
 		1
 	"""
 	@spec push( table, key, score, ttl, data ) :: :ok
 	def push( table, key, score, ttl, data \\ nil ) do
-		GenServer.cast( table |> tbl, { :push, { key, score, ttl, data } } )
+		GenServer.call( table |> tbl, { :push, { key, score, ttl, data } } )
 	end
 	
 	
@@ -69,13 +69,13 @@ defmodule SortedTtlList do
 
 	## Examples
 		iex>{:ok, _tid} = SortedTtlList.start_link( "test_table" )
-		...>:ok = SortedTtlList.push( "test_table", "mykey", 23, 3600, %{ some: "additional", data2: "save" } )
+		...>{ "mykey", 23, _expire_ts, %{ some: "additional", data2: "save" } } = SortedTtlList.push( "test_table", "mykey", 23, 3600, %{ some: "additional", data2: "save" } )
 		...>{ "mykey", 23, _expire_timestamp, %{ some: "additional", data2: "save" } } = SortedTtlList.get( "test_table", "mykey" )
 		...>SortedTtlList.size( "test_table" )
 		1
 		
 		iex>{:ok, _tid} = SortedTtlList.start_link( "test_table" )
-		...>:ok = SortedTtlList.push( "test_table", "mykey", 23, 2, %{ some: "additional", data2: "save" } )
+		...>{ "mykey", 23, _expire_ts, %{ some: "additional", data2: "save" } } = SortedTtlList.push( "test_table", "mykey", 23, 2, %{ some: "additional", data2: "save" } )
 		...>{ "mykey", 23, _expire_timestamp, %{ some: "additional", data2: "save" } } = SortedTtlList.get( "test_table", "mykey" )
 		...>:timer.sleep( 2000 )
 		...>nil = SortedTtlList.get( "test_table", "mykey" )
@@ -97,7 +97,7 @@ defmodule SortedTtlList do
 
 	## Examples
 		iex>{:ok, _tid} = SortedTtlList.start_link( "test_table" )
-		...>:ok = SortedTtlList.push( "test_table", "mykey", 23, 3600, %{ some: "additional", data2: "save" } )
+		...>{ "mykey", 23, _expire_ts, %{ some: "additional", data2: "save" } } = SortedTtlList.push( "test_table", "mykey", 23, 3600, %{ some: "additional", data2: "save" } )
 		...>:ok = SortedTtlList.delete( "test_table", "mykey" )
 		...>SortedTtlList.size( "test_table" )
 		0
@@ -117,15 +117,15 @@ defmodule SortedTtlList do
 
 	## Examples
 		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
-		...>:ok = SortedTtlList.push( tid, "mykeyA", 23, 3600, nil )
-		...>:ok = SortedTtlList.push( tid, "mykeyB", 13, 3600, nil )
+		...>{ "mykeyA", 23, _expire_ts, nil } = SortedTtlList.push( tid, "mykeyA", 23, 3600, nil )
+		...>{ "mykeyB", 13, _expire_ts, nil } = SortedTtlList.push( tid, "mykeyB", 13, 3600, nil )
 		...>[ { "mykeyB", 13, _tsA, nil }, { "mykeyA", 23, _tsB, nil } ] = SortedTtlList.list( tid )
 		...>SortedTtlList.size( tid )
 		2
 		
 		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
-		...>:ok = SortedTtlList.push( tid, "mykeyA", 23, 3600, nil )
-		...>:ok = SortedTtlList.push( tid, "mykeyB", 13, 3600, nil )
+		...>{ "mykeyA", 23, _expire_ts, nil }= SortedTtlList.push( tid, "mykeyA", 23, 3600, nil )
+		...>{ "mykeyB", 13, _expire_ts, nil }= SortedTtlList.push( tid, "mykeyB", 13, 3600, nil )
 		...>[ { "mykeyA", 23, _tsB, nil }, { "mykeyB", 13, _tsA, nil } ] = SortedTtlList.list( tid, true )
 		...>SortedTtlList.size( tid )
 		2
@@ -145,7 +145,7 @@ defmodule SortedTtlList do
 	## Examples
 		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
 		...>0 = SortedTtlList.size( tid )
-		...>:ok = SortedTtlList.push( tid, "mykey", 23, 3600, nil )
+		...>{ "mykey", 23, _expire_ts, nil } = SortedTtlList.push( tid, "mykey", 23, 3600, nil )
 		...>SortedTtlList.size( tid )
 		1
 	"""
@@ -195,21 +195,15 @@ defmodule SortedTtlList do
 		{ :ok, tid }
 	end	
 	
-	def handle_cast( { :push, { key, score, ttl, data } }, tid ) do
+	def handle_call( { :push, { key, score, ttl, data } }, _from, tid ) do
 		
 		exp = now( ) + ttl
-		
-		:ets.insert( tid, { key, score, exp, data } )
+		saved = { key, score, exp, data }
+		:ets.insert( tid, saved )
 		Logger.debug "added key \"#{key}\" to table '#{tid}'"
 		{ :noreply, tid }
+		{ :reply, saved, tid }
 	end
-	
-	def handle_cast( { :delete, key }, tid ) do
-		delete_key( key, tid )
-		Logger.debug "deleted key \"#{key}\" from table '#{tid}'"
-		{ :noreply, tid }
-	end
-	
 	
 	@lint { Credo.Check.Refactor.PipeChainStart, false }
 	def handle_call( { :list, reverse }, _from, tid ) do
@@ -269,6 +263,11 @@ defmodule SortedTtlList do
 		end
 	end
 	
+	def handle_cast( { :delete, key }, tid ) do
+		delete_key( key, tid )
+		Logger.debug "deleted key \"#{key}\" from table '#{tid}'"
+		{ :noreply, tid }
+	end
 	
 	defp delete_key( nil, _tid ), do: :ok
 	defp delete_key( [ ], _tid ), do: :ok

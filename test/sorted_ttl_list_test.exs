@@ -33,7 +33,7 @@ defmodule SortedTtlListTest do
 	end
 	
 	test "add elements to a non started table" do
-		Stl.push( "testX", "aaa", 1, 60, %{ a: 123 } )
+		{ :noproc, _meta } = catch_exit( Stl.push( "testX", "aaa", 1, 60, %{ a: 123 } ) )
 		{ :noproc, _meta } = catch_exit( Stl.list( "testX" ) )
 	end
 	
