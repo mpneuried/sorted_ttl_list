@@ -9,7 +9,7 @@ defmodule SortedTtlListTest do
 	alias SortedTtlList, as: Stl
 
 	test "add elements to the table" do
-		Stl.start_link( "testA" )
+		Stl.start_link( "testA", false )
 		Stl.start_link( "testB" )
 		
 		Stl.push( "testA", "aaa", 1, 60, %{ a: 123 } )
@@ -82,6 +82,34 @@ defmodule SortedTtlListTest do
 		
 		[ ] = Stl.list( "testEx" )
 		
+	end
+	
+	test "persistante table test" do
+		Stl.start_link( "testPersistant", true )
+		
+		# started with pre populated table
+		presize = Stl.size( "testPersistant" )
+		if presize > 0 do
+			IO.puts "found presited data size: #{ presize }"
+		end
+		assert presize in [ 0, 3 ]
+		
+		:ok = Stl.flush( "testPersistant" )
+		
+		Stl.push( "testPersistant", "aaa", 1, 60, %{ a: 123 } )
+		Stl.push( "testPersistant", "bbb", 10, 60, %{ b: 234 } )
+		
+		
+		{ "aaa", 1, _, %{ a: 123 } } = Stl.get( "testPersistant", "aaa" )
+		
+	 	[ { "aaa", 1, _, %{ a: 123 } }, { "bbb", 10, _, %{ b: 234 } } ] = Stl.list( "testPersistant" )
+		
+		Stl.push( "testPersistant", "ccc", 5, 60, %{ c: 345 } )
+		
+		[ { "aaa", 1, _, %{ a: 123 } }, { "ccc", 5, _, %{ c: 345 } }, { "bbb", 10, _, %{ b: 234 } } ] = Stl.list( "testPersistant" )
+		
+		
+		assert Stl.size( "testPersistant" ) == 3
 	end
 	
 end

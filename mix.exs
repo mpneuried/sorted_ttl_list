@@ -1,4 +1,7 @@
 defmodule SortedTtlList.Mixfile do
+	@moduledoc """
+	Project config
+	"""
 	use Mix.Project
 	
 	defp package do
@@ -19,13 +22,13 @@ defmodule SortedTtlList.Mixfile do
 	def project do
 		[
 			app: :sorted_ttl_list,
-			version: "1.0.0",
+			version: "1.1.0",
 			elixir: "~> 1.3",
 			build_embedded: Mix.env == :prod,
 			start_permanent: Mix.env == :prod,
 			deps: deps( ),
-			package: package,
-			description: description,
+			package: package( ),
+			description: description( ),
 			docs: [ extras: [ "README.md" ], main: "readme" ],
 			test_coverage: [ tool: ExCoveralls ]
 		]
@@ -54,10 +57,11 @@ defmodule SortedTtlList.Mixfile do
 	defp deps do
 		[
 			{ :dialyze, "~> 0.2", only: :dev },
-			{ :credo, "~> 0.4", only: [ :dev, :test ] },
-			{ :excoveralls, "~> 0.4", only: [ :dev, :test ] },
-			{ :earmark, ">= 0.0.0", only: [ :docs, :dev ] },
-			{ :ex_doc, ">= 0.0.0", only: [ :docs, :dev ] }
+			{ :benchee, "~> 0.6", only: :test },
+			{ :credo, "~> 0.7", only: [ :dev, :test ] },
+			{ :excoveralls, "~> 0.6", only: [ :dev, :test ] },
+			{ :earmark, "~> 1.2", only: [ :docs, :dev ] },
+			{ :ex_doc, "~> 0.15", only: [ :docs, :dev ] }
 		]
 	end
 end

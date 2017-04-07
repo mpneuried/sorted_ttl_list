@@ -41,6 +41,12 @@ Create the table
 { :ok, tid } = SortedTtlList.start_link( "my_tablename" )
 ```
 
+Create the table with active backup/restore on terminate/load via dets.
+
+```elixir
+{ :ok, tid } = SortedTtlList.start_link( "my_tablename", true )
+```
+
 ### PUSH / UPDATE
 
 Add elements to the list or update existing keys
@@ -78,6 +84,14 @@ delete a element
 :ok = SortedTtlList.list( "my_tablename", "element_key" )
 ```
 
+### FLUSH
+
+flush all data within a table
+
+```elixir
+:ok = SortedTtlList.flush( "my_tablename" )
+```
+
 ### SIZE
 
 get the size of the list
@@ -95,10 +109,28 @@ true = SortedTtlList.exists( "my_tablename" )
 false = SortedTtlList.exists( "nobody" )
 ```
 
+### BACKUP
+
+Manual backup of the ets table to a dets file.
+If persistence is active this is also done on terminate
+
+```elixir
+:ok = SortedTtlList.backup( "my_tablename" )
+```
+
+## Benchmark
+
+The run the benchmark call: 
+
+```sh
+MIX_ENV=test mix run bench/sorted_ttl_list_bench.exs
+```
+
 ## Release History
 
 |Version|Date|Description|
 |:--:|:--:|:--|
+|1.1.0|2016-12-08|added optional persistence via dets on load and terminate. There are also a new methods for manual backup `.backup/1` and to clear the whole table `.flush/1`. Added benchmarks |
 |1.0.0|2016-12-08|breaking change: return of `push` is now the generated data `{ key, score, expire_ts, data }` instead of just an `:ok` |
 |0.1.2|2016-12-01|removed io inspect|
 |0.1.1|2016-12-01|added reverse option for list|

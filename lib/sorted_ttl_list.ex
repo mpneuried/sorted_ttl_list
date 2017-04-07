@@ -155,6 +155,45 @@ defmodule SortedTtlList do
 	end
 	
 	@doc """
+	Flush the content of a table
+
+	## Parameters
+
+	* `table` (Binary|Atom) The table to list the elements.
+
+	## Examples
+		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
+		...>0 = SortedTtlList.size( tid )
+		...>{ "mykey", 23, _expire_ts, nil } = SortedTtlList.push( tid, "mykey", 23, 3600, nil )
+		...>1 = SortedTtlList.size( tid )
+		...>SortedTtlList.flush( tid )
+		...>SortedTtlList.size( tid )
+		0
+	"""
+	@spec flush( table ) :: Integer.t
+	def flush( table ) do
+		GenServer.cast( table |> tbl, :flush )
+	end
+	
+	@doc """
+	Backup the table to dets
+
+	## Parameters
+
+	* `table` (Binary|Atom) The table to list the elements.
+
+	## Examples
+		iex>{:ok, tid} = SortedTtlList.start_link( "test_table_backup", true )
+		...>SortedTtlList.push( tid, "mykey", 23, 3600, nil )
+		...>SortedTtlList.backup( tid )
+		:ok
+	"""
+	@spec backup( table ) :: Integer.t
+	def backup( table ) do
+		GenServer.cast( table |> tbl, :backup )
+	end
+	
+	@doc """
 	Check if a table exists
 
 	## Parameters
@@ -180,33 +219,70 @@ defmodule SortedTtlList do
 	end
 	
 	# GENSERVER API
-	@spec start_link( table ) :: { :ok, pid }
-	def start_link( tablename ) do
+	@doc """
+	Start a table
+
+	## Parameters
+
+	* `tablename` (Binary|Atom) The table to create.
+	* `persist` (Boolean, default: `true`) Persist this table on start/exits from/to the disk.
+
+	## Examples
+		iex>{isok, _pid } = SortedTtlList.start_link( "hello" )
+		...>isok
+		:ok
+		
+		iex>{isok, _pid } = SortedTtlList.start_link( "helloPersist", true )
+		...>isok
+		:ok
+	"""
+	@spec start_link( String.t, boolean ) :: { :ok, { pid, boolean } }
+	def start_link( tablename, persist \\ false ) do
 		table = tablename |> tbl
-		GenServer.start_link( __MODULE__, [ table ] , name: table )
+		GenServer.start_link( __MODULE__, [ table, persist ] , name: table )
 	end
 	
-	def init( [ table ] ) do
+	def init( [ table, persist ] ) do
 		Logger.debug "startet list expire with tablename: #{table}"
-		
 		# start receiving messages
+		
 		tid = :ets.new( table, [ :set, :named_table, :public ] )
 		
-		{ :ok, tid }
-	end	
+		if persist do
+			Process.flag( :trap_exit, true )
+			restore( tid )
+		end
+		
+		{ :ok, [ tid, persist ] }
+	end
 	
-	def handle_call( { :push, { key, score, ttl, data } }, _from, tid ) do
+	def terminate( reason, [ tid, persist ] ) do
+		Logger.debug "terminate(#{reason}) - #{tid}" 
+		if persist do
+			case backup( tid ) do
+				:ok ->
+					Logger.debug "backup done - #{tid}" 
+					reason
+				_ ->
+					Logger.warn "backup error" 
+					reason
+			end
+		else
+			reason
+		end
+	end
+	
+	def handle_call( { :push, { key, score, ttl, data } }, _from, [ tid, _persist ] = state ) do
 		
 		exp = now( ) + ttl
 		saved = { key, score, exp, data }
 		:ets.insert( tid, saved )
 		Logger.debug "added key \"#{key}\" to table '#{tid}'"
-		{ :noreply, tid }
-		{ :reply, saved, tid }
+		{ :reply, saved, state }
 	end
 	
-	@lint { Credo.Check.Refactor.PipeChainStart, false }
-	def handle_call( { :list, reverse }, _from, tid ) do
+	#@lint { Credo.Check.Refactor.PipeChainStart, false }
+	def handle_call( { :list, reverse }, _from, [ tid, _persist ] = state ) do
 		date = now( )
 		{ found, expired } = :ets.tab2list( tid )
 			|> Enum.reduce( { [ ], [ ] }, fn ( { key, score, ttl, data }, { fnd, exp } ) ->
@@ -224,33 +300,33 @@ defmodule SortedTtlList do
 			|> Enum.sort( &( sort_list( &1, &2, reverse ) ) )
 			|> Enum.to_list
 		
-		{ :reply, list, tid }
+		{ :reply, list, state }
 	end
 	
-	def handle_call( { :get, key }, _from, tid ) do
+	def handle_call( { :get, key }, _from, [ tid, _persist ] = state ) do
 		case get_key( key, tid ) do
 			{ key, _score, ttl, _data } = el ->
 				if check_el( ttl ) do
-					{ :reply, el, tid }
+					{ :reply, el, state }
 				else
 					# delete an expired key
 					key |> delete_key( tid )
-					{ :reply, nil, tid }
+					{ :reply, nil, state }
 				end
 			nil ->
-				{ :reply, nil, tid }
+				{ :reply, nil, state }
 		end
 	end
 	
-	def handle_call( :size, _from, tid ) do
-		{ :reply, :ets.info( tid, :size ), tid }
+	def handle_call( :size, _from, [ tid, _persist ] = state ) do
+		{ :reply, :ets.info( tid, :size ), state }
 	end
 	
-	def handle_call( :exists, _from, tid ) do
+	def handle_call( :exists, _from, [ tid, _persist ] = state ) do
 		if :ets.info( tid ) != :undefined do
-			{ :reply, true, tid }
+			{ :reply, true, state }
 		else
-			{ :reply, false, tid }
+			{ :reply, false, state }
 		end
 	end
 	
@@ -263,10 +339,62 @@ defmodule SortedTtlList do
 		end
 	end
 	
-	def handle_cast( { :delete, key }, tid ) do
+	def handle_cast( { :delete, key }, [ tid, _persist ] = state ) do
 		delete_key( key, tid )
 		Logger.debug "deleted key \"#{key}\" from table '#{tid}'"
-		{ :noreply, tid }
+		{ :noreply, state }
+	end
+	
+	def handle_cast( :flush, [ tid, _persist ] = state ) do
+		:ets.delete_all_objects( tid )
+		Logger.info "flushed table '#{tid}'"
+		{ :noreply, state }
+	end
+	
+	def handle_cast( :backup, [ tid, persist ] = state ) do
+		if persist do
+			case get_dets( tid ) do
+				{ :ok, dtid } ->
+					:ets.to_dets( tid, dtid )
+					size = :dets.info( dtid, :size )
+					:dets.close( dtid )
+					Logger.debug "persist #{size} elements of '#{tid}' to disk"
+					{ :noreply, state }
+				{ :error, err } ->
+					Logger.warn "could not backup data: #{ inspect( err ) }"
+					{ :noreply, state }
+				unkown ->
+					Logger.error "unkown dets response: #{inspect( unkown )}"
+					{ :noreply, state }
+			end
+		else
+			{ :noreply, state }
+		end
+	end
+	
+	defp get_dets( tid ) do
+		file = "sorted_ttl_list_#{ tid }.dets"
+			|> String.downcase
+			|> String.to_charlist
+		:dets.open_file( "pers_#{__MODULE__}_#{tid}", [
+			type: :set,
+			file: file,
+			auto_save: :infinity
+		] ) 
+	end
+	
+	defp restore( tid ) do
+		case get_dets( tid ) do
+			{ :ok, dtid } ->
+				:ets.from_dets( tid, dtid )
+				size = :ets.info( tid, :size )
+				:dets.close( dtid )
+				Logger.info "started '#{tid}' with restore of #{ size } elements"
+			{ :error, err } ->
+				Logger.warn "could not restore data: #{ inspect( err ) }"
+			unkown ->
+				Logger.error "unkown dets response: #{inspect( unkown )}"
+		end
 	end
 	
 	defp delete_key( nil, _tid ), do: :ok
