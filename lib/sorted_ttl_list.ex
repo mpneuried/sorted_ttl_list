@@ -123,7 +123,7 @@ defmodule SortedTtlList do
 		...>SortedTtlList.size( tid )
 		2
 		
-		iex>{:ok, tid} = SortedTtlList.start_link( "test_table" )
+		iex>{:ok, tid} = SortedTtlList.start_link( 1337 )
 		...>{ "mykeyA", 23, _expire_ts, nil }= SortedTtlList.push( tid, "mykeyA", 23, 3600, nil )
 		...>{ "mykeyB", 13, _expire_ts, nil }= SortedTtlList.push( tid, "mykeyB", 13, 3600, nil )
 		...>[ { "mykeyA", 23, _tsB, nil }, { "mykeyB", 13, _tsA, nil } ] = SortedTtlList.list( tid, true )
