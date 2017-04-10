@@ -8,6 +8,9 @@ elixir:
 otp_release:
   - 18.3
   - 19.3
+env:
+  - SORTED_TTL_LIST_FOLDER=/tmp/
+  - SORTED_TTL_LIST_FOLDER=$HOME
 script:
   - MIX_ENV=test mix test --trace
 after_success:

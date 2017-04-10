@@ -372,8 +372,13 @@ defmodule SortedTtlList do
 		end
 	end
 	
+	
+	# ####################
+	# PRIVATE FUNCTIONS
+	# ####################
+	
 	defp get_dets( tid ) do
-		file = "sorted_ttl_list_#{ tid }.dets"
+		file = "#{ get_conf( :folder, "", :string ) }sorted_ttl_list_#{ tid }.dets"
 			|> String.downcase
 			|> String.to_charlist
 		:dets.open_file( "pers_#{__MODULE__}_#{tid}", [
@@ -442,4 +447,64 @@ defmodule SortedTtlList do
 	
 	defp now, do: ts( DateTime.utc_now( ) )
 	defp ts( date ), do: date |> DateTime.to_unix( :seconds )
+
+	
+	defp get_conf( { module, key } ) do
+		get_conf( { module, key, nil, :string } )
+	end
+	
+	defp get_conf( { module, key, default } ) do
+		get_conf( { module, key, default, :string } )
+	end
+	
+	defp get_conf( { module, key, default, type } ) do
+		
+		cval = process_conf_env( Application.get_env( module, key, default ) )
+	
+		case { type, cval } do
+			{ _undefined, nil } ->
+				nil
+			{ :string, val } when is_number( val ) ->
+				Integer.to_string( val )
+			{ :string, val } when is_binary( val ) ->
+				val
+			{ :number, val } when is_binary( val ) ->
+				String.to_integer( val )
+			{ :number, val } when is_number( val ) ->
+				val
+			{ _undefined, val } ->
+				val
+		end
+	end
+	
+	defp get_conf( key ) when is_atom( key ) do
+		get_conf( { :sorted_ttl_list, key, nil, :string } )
+	end
+	
+	defp get_conf( key, default ) do
+		case default do
+			default when is_number( default ) ->
+				get_conf( { :sorted_ttl_list, key, default, :number } )
+			default when is_binary( default ) ->
+				get_conf( { :sorted_ttl_list, key, default, :string } )
+		end
+	end
+	
+	defp get_conf( key, default, type ) do
+		get_conf( { :sorted_ttl_list, key, default, type } )
+	end
+	
+	
+	defp process_conf_env( { :system, envvar, default } ) do
+		sysvar = System.get_env( envvar )
+		if sysvar == nil do
+			default
+		else
+			sysvar
+		end
+	end
+	
+	defp process_conf_env( val ) do
+		val
+	end
 end
