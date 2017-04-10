@@ -12,7 +12,7 @@ env:
   - SORTED_TTL_LIST_FOLDER=/tmp/
   - SORTED_TTL_LIST_FOLDER=$HOME/test_dets/
 before_script:
-	- mkdir $HOME/test_dets
+  - mkdir $HOME/test_dets
 script:
   - MIX_ENV=test mix test --trace
 after_success:
