@@ -31,6 +31,12 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
     end
     ```
 
+## Config
+
+You can set the configuration within your `config.exs` or just use the environment vars.
+
+- **`folder`** *`Binary` default: ``*: the folder to save the dets files into. If not defined it'll use the project root folder. *env-var: `SORTED_TTL_LIST_FOLDER`*
+
 ## Basic usage
 
 ### START
@@ -130,6 +136,7 @@ MIX_ENV=test mix run bench/sorted_ttl_list_bench.exs
 
 |Version|Date|Description|
 |:--:|:--:|:--|
+|1.1.1|2016-12-10|added config to define the dets folder|
 |1.1.0|2016-12-08|added optional persistence via dets on load and terminate. There are also a new methods for manual backup `.backup/1` and to clear the whole table `.flush/1`. Added benchmarks |
 |1.0.0|2016-12-08|breaking change: return of `push` is now the generated data `{ key, score, expire_ts, data }` instead of just an `:ok` |
 |0.1.2|2016-12-01|removed io inspect|
