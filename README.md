@@ -15,7 +15,8 @@ An example use case could be a user online list with additional data.
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
 
-  1. Add `sorted_ttl_list` to your list of dependencies in `mix.exs`:
+1. Add `sorted_ttl_list` to your list of dependencies in `mix.exs`:
+
 
     ```elixir
     def deps do
@@ -23,7 +24,8 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
     end
     ```
 
-  2. Ensure `sorted_ttl_list` is started before your application:
+2. Ensure `sorted_ttl_list` is started before your application:
+
 
     ```elixir
     def application do
@@ -35,7 +37,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 
 You can set the configuration within your `config.exs` or just use the environment vars.
 
-- **`folder`** *`Binary` default: ``*: the folder to save the dets files into. If not defined it'll use the project root folder. *env-var: `SORTED_TTL_LIST_FOLDER`*
+- **`folder`** _`Binary` default: ``_: the folder to save the dets files into. If not defined it'll use the project root folder. _env-var: `SORTED_TTL_LIST_FOLDER`_
 
 ## Basic usage
 
@@ -78,6 +80,7 @@ get the sorted list
 ```
 
 or sorted fron high to low
+
 ```elixir
 [ { "another_key", 1337, 1480622607, %{ another: "data" } }, { "element_key", 1480592547, 1480592607, %{ additional: "data" } } ] = SortedTtlList.list( "my_tablename", true )
 ```
@@ -126,7 +129,7 @@ If persistence is active this is also done on terminate
 
 ## Benchmark
 
-The run the benchmark call: 
+The run the benchmark call:
 
 ```sh
 MIX_ENV=test mix run bench/sorted_ttl_list_bench.exs
@@ -134,16 +137,17 @@ MIX_ENV=test mix run bench/sorted_ttl_list_bench.exs
 
 ## Release History
 
-|Version|Date|Description|
-|:--:|:--:|:--|
-|1.1.1|2016-12-10|added config to define the dets folder|
-|1.1.0|2016-12-08|added optional persistence via dets on load and terminate. There are also a new methods for manual backup `.backup/1` and to clear the whole table `.flush/1`. Added benchmarks |
-|1.0.0|2016-12-08|breaking change: return of `push` is now the generated data `{ key, score, expire_ts, data }` instead of just an `:ok` |
-|0.1.2|2016-12-01|removed io inspect|
-|0.1.1|2016-12-01|added reverse option for list|
-|0.1.0|2016-12-01|added `exists` method and optimized docs|
-|0.0.1|2016-11-28|Minimal elixir version|
-|0.0.1|2016-11-28|first alpha version ...|
+| Version |    Date    | Description                                                                                                                                                                     |
+| :-----: | :--------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|  1.1.2  | 2021-11-11 | fixed deprecation                                                                                                                                                               |
+|  1.1.1  | 2016-12-10 | added config to define the dets folder                                                                                                                                          |
+|  1.1.0  | 2016-12-08 | added optional persistence via dets on load and terminate. There are also a new methods for manual backup `.backup/1` and to clear the whole table `.flush/1`. Added benchmarks |
+|  1.0.0  | 2016-12-08 | breaking change: return of `push` is now the generated data `{ key, score, expire_ts, data }` instead of just an `:ok`                                                          |
+|  0.1.2  | 2016-12-01 | removed io inspect                                                                                                                                                              |
+|  0.1.1  | 2016-12-01 | added reverse option for list                                                                                                                                                   |
+|  0.1.0  | 2016-12-01 | added `exists` method and optimized docs                                                                                                                                        |
+|  0.0.1  | 2016-11-28 | Minimal elixir version                                                                                                                                                          |
+|  0.0.1  | 2016-11-28 | first alpha version ...                                                                                                                                                         |
 
 ## The MIT License (MIT)
 
